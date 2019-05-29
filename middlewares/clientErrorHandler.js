@@ -5,6 +5,7 @@ const clientErrorHandler = (error, req, res, next) => {
       message: error.message
     }
   });
+  next();
 };
 
 module.exports = clientErrorHandler;

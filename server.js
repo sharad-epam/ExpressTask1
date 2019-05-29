@@ -12,6 +12,11 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/news", require("./routes/news"));
 
+app.use((req, res, next) => {
+  const error = new Error("Not Found");
+  error.status = 404;
+  next(error);
+});
 
 app.use(errorHandler);
 
