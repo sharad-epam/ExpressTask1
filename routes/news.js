@@ -47,6 +47,45 @@ router.post("/", (req, res, next) => {
   res.send(newsData);
 });
 
+//update the news data
+router.put("/:id", (req, res,next) => {
+  const exits = newsData.sources.some(item => item.id === req.params.id);
+  if (exits) {
+    const updatedChannel = req.body;
+    newsData.sources.forEach(channel => {
+      if (channel.id === req.params.id) {
+        channel.id = updatedChannel.id ? updatedChannel.id : channel.id;
+        channel.name = updatedChannel.name ? updatedChannel.name : channel.name;
+        channel.description = updatedChannel.description
+          ? updatedChannel.description
+          : channel.description;
+        channel.url = updatedChannel.url ? updatedChannel.url : channel.url;
+        channel.category = updatedChannel.category
+          ? updatedChannel.category
+          : channel.category;
+        channel.language = updatedChannel.language
+          ? updatedChannel.language
+          : channel.language;
+        channel.country = updatedChannel.country
+          ? updatedChannel.country
+          : channel.country;
+        channel.urlsToLogos = updatedChannel.urlsToLogos
+          ? updatedChannel.urlsToLogos
+          : channel.urlsToLogos;
+        channel.sortBysAvailable = updatedChannel.sortBysAvailable
+          ? updatedChannel.sortBysAvailable
+          : channel.sortBysAvailable;
+
+        res.json({ msg: "Channel updated", channel });
+      }
+    });
+  } else {
+    const error = new Error(`No channel found with ${req.params.id}`);
+    error.status = 400;
+    next(error);
+  }
+});
+
 //delete news channel
 router.delete("/:id", (req, res, next) => {
   const exits = newsData.sources.some(item => item.id === req.params.id);
