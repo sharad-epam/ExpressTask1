@@ -1,30 +1,55 @@
 const express = require("express");
 const router = express.Router();
 const newsData = require("./news.json");
+const mongoose = require("mongoose");
 
+
+const News = require("./models/news");
 //Get all News
 router.get("/", (req, res) => {
-  res.send(newsData);
+  News.find()
+    .exec()
+    .then(results => {
+      if (results) {
+        res.json({ results });
+      } else {
+        const error = new Error(`No records to display`, err);
+        error.status = 400;
+        next(error);
+      }
+    })
+    .catch(err => {
+      res.status(500).json({
+        error: err
+      });
+    });
 });
 
 //Get Single News
 router.get("/:id", (req, res, next) => {
-  const exits = newsData.sources.some(item => item.id === req.params.id);
-  if (exits) {
-    res.send(newsData.sources.filter(item => item.id === req.params.id));
-  } else {
-    const error = new Error(
-      `News channel does not exits! with ${req.params.id}`
-    );
-    error.status = 404;
-    next(error);
-  }
+  News.findById(req.params.id)
+    .exec()
+    .then(result => {
+      if (result) {
+        res.json(result);
+      } else {
+        const error = new Error(
+          `News channel does not exits! with ${req.params.id}`
+        );
+        error.status = 400;
+        next(error);
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ error: err });
+    });
 });
 
 //Add new news channel
 router.post("/", (req, res, next) => {
-  const newsChannel = {
-    id: req.body.id,
+  const news = new News({
+    _id: new mongoose.Types.ObjectId(),
+    news_id: req.body.id,
     name: req.body.name,
     description: req.body.description,
     url: req.body.url,
@@ -37,70 +62,56 @@ router.post("/", (req, res, next) => {
       large: ""
     },
     sortBysAvailable: req.body.sortBysAvailable
-  };
-  if (!newsChannel.id || !newsChannel.name) {
-    const error = new Error(`Please include the id and name of the channel`);
-    error.status = 400;
-    next(error);
-  }
-  newsData.sources.push(newsChannel);
-  res.send(newsData);
+  });
+  news
+    .save()
+    .then(result => {
+      res.json({ result });
+    })
+    .catch(err => {
+      const error = new Error(`Some Error occured while posting the data`, err);
+      error.status = 400;
+      next(error);
+    });
 });
 
 //update the news data
-router.put("/:id", (req, res,next) => {
-  const exits = newsData.sources.some(item => item.id === req.params.id);
-  if (exits) {
-    const updatedChannel = req.body;
-    newsData.sources.forEach(channel => {
-      if (channel.id === req.params.id) {
-        channel.id = updatedChannel.id ? updatedChannel.id : channel.id;
-        channel.name = updatedChannel.name ? updatedChannel.name : channel.name;
-        channel.description = updatedChannel.description
-          ? updatedChannel.description
-          : channel.description;
-        channel.url = updatedChannel.url ? updatedChannel.url : channel.url;
-        channel.category = updatedChannel.category
-          ? updatedChannel.category
-          : channel.category;
-        channel.language = updatedChannel.language
-          ? updatedChannel.language
-          : channel.language;
-        channel.country = updatedChannel.country
-          ? updatedChannel.country
-          : channel.country;
-        channel.urlsToLogos = updatedChannel.urlsToLogos
-          ? updatedChannel.urlsToLogos
-          : channel.urlsToLogos;
-        channel.sortBysAvailable = updatedChannel.sortBysAvailable
-          ? updatedChannel.sortBysAvailable
-          : channel.sortBysAvailable;
-
-        res.json({ msg: "Channel updated", channel });
-      }
+router.put("/:id", (req, res, next) => {
+  News.findByIdAndUpdate(req.params.id, { $set: req.body }, (err, result) => {
+    if (err) {
+      const error = new Error(`No channel found with ${req.params.id}`);
+      error.status = 400;
+      next(error);
+    }
+    res.json({
+      msg: `Record with id ${req.params.id} updated successfully!!`,
+      result
     });
-  } else {
-    const error = new Error(`No channel found with ${req.params.id}`);
-    error.status = 400;
-    next(error);
-  }
+  });
 });
 
 //delete news channel
 router.delete("/:id", (req, res, next) => {
-  const exits = newsData.sources.some(item => item.id === req.params.id);
-  if (exits) {
-    res.json({
-      msg: "Channel deleted",
-      newsData: newsData.sources.filter(item => item.id !== req.params.id)
+  const exits = req.params.id;
+
+  News.deleteOne({ _id: exits })
+    .exec()
+    .then(result => {
+      if (result.length >= 0) {
+        res.json({ result });
+      } else {
+        const error = new Error(
+          `News channel does not exits! with ${req.params.id}`
+        );
+        error.status = 404;
+        next(error);
+      }
+    })
+    .catch(err => {
+      res.status(500).json({
+        error: err
+      });
     });
-  } else {
-    const error = new Error(
-      `News channel does not exits! with ${req.params.id}`
-    );
-    error.status = 404;
-    next(error);
-  }
 });
 
 module.exports = router;
