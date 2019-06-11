@@ -3,10 +3,9 @@ const router = express.Router();
 const newsData = require("./news.json");
 const mongoose = require("mongoose");
 
-
 const News = require("./models/news");
 //Get all News
-router.get("/", (req, res) => {
+router.get("/", (req, res, next) => {
   News.find()
     .exec()
     .then(results => {
@@ -17,11 +16,6 @@ router.get("/", (req, res) => {
         error.status = 400;
         next(error);
       }
-    })
-    .catch(err => {
-      res.status(500).json({
-        error: err
-      });
     });
 });
 
@@ -39,9 +33,6 @@ router.get("/:id", (req, res, next) => {
         error.status = 400;
         next(error);
       }
-    })
-    .catch(err => {
-      res.status(500).json({ error: err });
     });
 });
 
@@ -82,11 +73,12 @@ router.put("/:id", (req, res, next) => {
       const error = new Error(`No channel found with ${req.params.id}`);
       error.status = 400;
       next(error);
+    } else {
+      res.json({
+        msg: `Record with id ${req.params.id} updated successfully!!`,
+        result
+      });
     }
-    res.json({
-      msg: `Record with id ${req.params.id} updated successfully!!`,
-      result
-    });
   });
 });
 
@@ -106,11 +98,6 @@ router.delete("/:id", (req, res, next) => {
         error.status = 404;
         next(error);
       }
-    })
-    .catch(err => {
-      res.status(500).json({
-        error: err
-      });
     });
 });
 

@@ -46,17 +46,17 @@ app.use((req, res, next) => {
 // Using LocalStrategy with passport
 
 passport.use(
-  new LocalStrategy(function(username, password, done) {
-    User.getUserByUsername(username, function(err, user) {
-      if (err) throw err;
+  new LocalStrategy((username, password, done) => {
+    User.getUserByUsername(username, (err, user, next) => {
+      if (err) next(err);
       if (!user) {
         const error = new Error(`User does not exits!`);
         error.status = 404;
         next(error);
       }
 
-      User.comparePassword(password, user.password, function(err, isMatch) {
-        if (err) throw err;
+      User.comparePassword(password, user.password, (err, isMatch, next) => {
+        if (err) next(err);
         if (isMatch) {
           return done(null, user);
         } else {
@@ -69,12 +69,12 @@ passport.use(
   })
 );
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
-passport.deserializeUser(function(id, done) {
-  User.getUserById(id, function(err, user) {
+passport.deserializeUser((id, done) => {
+  User.getUserById(id, (err, user) => {
     done(err, user);
   });
 });
